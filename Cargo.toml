@@ -11,7 +11,7 @@ categories = ["parser-implementations"]
 homepage = "https://github.com/tailhook/dns-parser"
 documentation = "https://docs.rs/dns-parser"
 version = "0.8.0"
-authors = ["Paul Colomiets <paul@colomiets.name>"]
+authors = ["Daniel Kapit <daniel@kapit.me>"]
 
 [features]
 with-serde = ["serde", "serde_derive"]
