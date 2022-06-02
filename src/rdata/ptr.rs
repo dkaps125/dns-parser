@@ -1,6 +1,6 @@
 use Name;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Record<'a>(pub Name<'a>);
 
 impl<'a> ToString for Record<'a> {
@@ -18,6 +18,14 @@ impl<'a> super::Record<'a> for Record<'a> {
         let name = Name::scan(rdata, original)?;
         let record = Record(name);
         Ok(super::RData::PTR(record))
+    }
+
+    fn length(&self) -> u16 {
+        unimplemented!();
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        unimplemented!();
     }
 }
 
@@ -64,7 +72,7 @@ mod test {
         assert_eq!(&packet.answers[0].name.to_string()[..], "69.93.75.72.in-addr.arpa");
         assert_eq!(packet.answers[0].cls, C::IN);
         assert_eq!(packet.answers[0].ttl, 86400);
-        match packet.answers[0].data {
+        match &packet.answers[0].data {
             RData::PTR(name) => {
                 assert_eq!(&name.0.to_string()[..], "pool-72-75-93-69.verizon.net");
             }

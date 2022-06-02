@@ -62,6 +62,8 @@ pub (crate) trait Record<'a> {
     const TYPE: isize;
 
     fn parse(rdata: &'a [u8], original: &'a [u8]) -> RDataResult<'a>;
+    fn length(&self) -> u16;
+    fn to_bytes(&self) -> Vec<u8>;
 }
 
 impl<'a> RData<'a> {
@@ -84,7 +86,7 @@ impl<'a> RData<'a> {
     /// Returns packet type as enum
     ///
     /// Code can be converted to an integer `packet.type_code() as isize`
-    pub fn type_code(self) -> Type {
+    pub fn type_code(&self) -> Type {
         match self {
             RData::A(..)         => Type::A,
             RData::AAAA(..)      => Type::AAAA,
@@ -95,7 +97,39 @@ impl<'a> RData<'a> {
             RData::SOA(..)       => Type::SOA,
             RData::SRV(..)       => Type::SRV,
             RData::TXT(..)       => Type::TXT,
-            RData::Unknown(t, _) => t,
+            RData::Unknown(_t, _) => panic!("Unknown type"),
+        }
+    }
+
+    /// Returns the RDATALENGTH value for this RData
+    pub fn rdata_length(&self) -> u16 {
+        match self {
+            RData::A(val) => val.length(),
+            RData::AAAA(val) => val.length(),
+            RData::CNAME(val) => val.length(),
+            RData::NS(val) => val.length(),
+            RData::MX(val) => val.length(),
+            RData::PTR(val) => val.length(),
+            RData::SOA(val) => val.length(),
+            RData::SRV(val) => val.length(),
+            RData::TXT(val) => val.length(),
+            RData::Unknown(_t, _) => panic!("Unknown type"),
+        }
+    }
+
+    /// Returns the RDATA value 
+    pub fn to_bytes(&self) -> Vec<u8> {
+        match self {
+            RData::A(val) => val.to_bytes(),
+            RData::AAAA(val) => val.to_bytes(),
+            RData::CNAME(val) => val.to_bytes(),
+            RData::NS(val) => val.to_bytes(),
+            RData::MX(val) => val.to_bytes(),
+            RData::PTR(val) => val.to_bytes(),
+            RData::SOA(val) => val.to_bytes(),
+            RData::SRV(val) => val.to_bytes(),
+            RData::TXT(val) => val.to_bytes(),
+            RData::Unknown(_t, _) => panic!("Unknown type"),
         }
     }
 }

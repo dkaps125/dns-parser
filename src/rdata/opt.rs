@@ -15,4 +15,12 @@ impl<'a> super::Record<'a> for Record<'a> {
     fn parse(_rdata: &'a [u8], _original: &'a [u8]) -> super::RDataResult<'a> {
         unimplemented!();
     }
+
+    fn length(&self) -> u16 {
+        unimplemented!();
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        unimplemented!();
+    }
 }

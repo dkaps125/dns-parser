@@ -57,6 +57,14 @@ impl<'a> super::Record<'a> for Record<'a> {
             bytes: rdata,
         }))
     }
+
+    fn length(&self) -> u16 {
+        unimplemented!();
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        unimplemented!();
+    }
 }
 
 #[cfg(test)]

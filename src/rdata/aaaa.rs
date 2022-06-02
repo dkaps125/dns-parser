@@ -27,6 +27,14 @@ impl<'a> super::Record<'a> for Record {
         let record = Record(address);
         Ok(super::RData::AAAA(record))
     }
+
+    fn length(&self) -> u16 {
+        16
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        unimplemented!();
+    }
 }
 
 #[cfg(test)]

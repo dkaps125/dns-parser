@@ -2,7 +2,7 @@ use {Name, Error};
 use byteorder::{BigEndian, ByteOrder};
 
 /// The SOA (Start of Authority) record
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Record<'a> {
     pub primary_ns: Name<'a>,
     pub mailbox: Name<'a>,
@@ -36,6 +36,14 @@ impl<'a> super::Record<'a> for Record<'a> {
             minimum_ttl: BigEndian::read_u32(&rdata[(pos+16)..(pos+20)]),
         };
         Ok(super::RData::SOA(record))
+    }
+
+    fn length(&self) -> u16 {
+        unimplemented!();
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        unimplemented!();
     }
 }
 

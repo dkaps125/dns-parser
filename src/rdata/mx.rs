@@ -1,7 +1,7 @@
 use {Name, Error};
 use byteorder::{BigEndian, ByteOrder};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Record<'a> {
     pub preference: u16,
     pub exchange: Name<'a>,
@@ -20,6 +20,14 @@ impl<'a> super::Record<'a> for Record<'a> {
             exchange: Name::scan(&rdata[2..], original)?,
         };
         Ok(super::RData::MX(record))
+    }
+
+    fn length(&self) -> u16 {
+        unimplemented!();
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        unimplemented!();
     }
 }
 
@@ -68,19 +76,19 @@ mod test {
         assert_eq!(&packet.questions[0].qname.to_string()[..],
         "gmail.com");
         assert_eq!(packet.answers.len(), 5);
-        let items = vec![
-            ( 5, "gmail-smtp-in.l.google.com"),
-            (10, "alt1.gmail-smtp-in.l.google.com"),
-            (40, "alt4.gmail-smtp-in.l.google.com"),
-            (20, "alt2.gmail-smtp-in.l.google.com"),
-            (30, "alt3.gmail-smtp-in.l.google.com"),
+        let items: Vec<(&u16, &str)> = vec![
+            ( &5, "gmail-smtp-in.l.google.com"),
+            (&10, "alt1.gmail-smtp-in.l.google.com"),
+            (&40, "alt4.gmail-smtp-in.l.google.com"),
+            (&20, "alt2.gmail-smtp-in.l.google.com"),
+            (&30, "alt3.gmail-smtp-in.l.google.com"),
         ];
         for i in 0..5 {
             assert_eq!(&packet.answers[i].name.to_string()[..],
             "gmail.com");
             assert_eq!(packet.answers[i].cls, C::IN);
             assert_eq!(packet.answers[i].ttl, 1148);
-            match *&packet.answers[i].data {
+            match &packet.answers[i].data {
                 RData::MX( Record { preference, exchange }) => {
                     assert_eq!(preference, items[i].0);
                     assert_eq!(exchange.to_string(), (items[i].1).to_string());

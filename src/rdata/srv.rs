@@ -1,7 +1,7 @@
 use {Name, Error};
 use byteorder::{BigEndian, ByteOrder};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Record<'a> {
     pub priority: u16,
     pub weight: u16,
@@ -24,6 +24,14 @@ impl<'a> super::Record<'a> for Record<'a> {
             target: Name::scan(&rdata[6..], original)?,
         };
         Ok(super::RData::SRV(record))
+    }
+
+    fn length(&self) -> u16 {
+        unimplemented!();
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        unimplemented!();
     }
 }
 
@@ -76,19 +84,19 @@ mod test {
         assert_eq!(&packet.questions[0].qname.to_string()[..],
             "_xmpp-server._tcp.gmail.com");
         assert_eq!(packet.answers.len(), 5);
-        let items = vec![
-            (5, 0, 5269, "xmpp-server.l.google.com"),
-            (20, 0, 5269, "alt3.xmpp-server.l.google.com"),
-            (20, 0, 5269, "alt1.xmpp-server.l.google.com"),
-            (20, 0, 5269, "alt2.xmpp-server.l.google.com"),
-            (20, 0, 5269, "alt4.xmpp-server.l.google.com"),
+        let items: Vec<(&u16, &u16, &u16, &str)> = vec![
+            (&5, &0, &5269, "xmpp-server.l.google.com"),
+            (&20, &0, &5269, "alt3.xmpp-server.l.google.com"),
+            (&20, &0, &5269, "alt1.xmpp-server.l.google.com"),
+            (&20, &0, &5269, "alt2.xmpp-server.l.google.com"),
+            (&20, &0, &5269, "alt4.xmpp-server.l.google.com"),
         ];
         for i in 0..5 {
             assert_eq!(&packet.answers[i].name.to_string()[..],
                 "_xmpp-server._tcp.gmail.com");
             assert_eq!(packet.answers[i].cls, C::IN);
             assert_eq!(packet.answers[i].ttl, 900);
-            match *&packet.answers[i].data {
+            match &packet.answers[i].data {
                 RData::SRV(Record { priority, weight, port, target }) => {
                     assert_eq!(priority, items[i].0);
                     assert_eq!(weight, items[i].1);

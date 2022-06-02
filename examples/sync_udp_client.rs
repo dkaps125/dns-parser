@@ -28,8 +28,8 @@ fn main() {
 fn resolve(name: &str) -> Result<(), Box<dyn Error>> {
     let sock = UdpSocket::bind("127.0.0.1:0")?;
     sock.connect("127.0.0.1:53")?;
-    let mut builder = Builder::new_query(1, true);
-    builder.add_question(name, false, QueryType::A, QueryClass::IN);
+    let mut builder = Builder::new(1, true);
+    builder.question(name, false, QueryType::A, QueryClass::IN);
     let packet = builder.build().map_err(|_| "truncated packet")?;
     sock.send(&packet)?;
     let mut buf = vec![0u8; 4096];

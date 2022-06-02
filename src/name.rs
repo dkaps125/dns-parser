@@ -14,12 +14,13 @@ use {Error};
 ///
 /// This contains just a reference to a slice that contains the data.
 /// You may turn this into a string using `.to_string()`
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Name<'a>{
     labels: &'a [u8],
     /// This is the original buffer size. The compressed names in original
     /// are calculated in this buffer
     original: &'a [u8],
+    pub str_val: String,
 }
 
 impl<'a> Name<'a> {
@@ -85,11 +86,56 @@ impl<'a> Name<'a> {
             byte = parse_data[pos];
         }
         if let Some(return_pos) = return_pos {
-            return Ok(Name {labels: &data[..return_pos+2], original: original});
+            return Ok(Name {
+                labels: &data[..return_pos+2], 
+                original: original, 
+                str_val: Name::to_string(data[..return_pos+2].to_vec(), original.to_vec())
+            });
         } else {
-            return Ok(Name {labels: &data[..pos+1], original: original });
+            return Ok(Name {
+                labels: &data[..pos+1], 
+                original: original,
+                str_val: Name::to_string(data[..pos+1].to_vec(), original.to_vec())
+            });
         }
     }
+
+    /// Creates a Name from a raw string value
+    pub fn from_string(name: &str) -> Name {
+        Name { labels: &[], original: &[], str_val: String::from(name) }
+    }
+
+    fn to_string(labels: Vec<u8>, original: Vec<u8>) -> String {
+        let mut val = String::from("");
+        let data = labels;
+        let original = original;
+        let mut pos = 0;
+        loop {
+            let byte = data[pos];
+            if byte == 0 {
+                return val;
+            } else if byte & 0b1100_0000 == 0b1100_0000 {
+                let off = (BigEndian::read_u16(&data[pos..pos+2])
+                           & !0b1100_0000_0000_0000) as usize;
+                if pos != 0 {
+                    val.write_char('.').unwrap();
+                }
+                val.extend(Name::to_string(original[off..].to_vec(), original).chars());
+                return val
+            } else if byte & 0b1100_0000 == 0 {
+                if pos != 0 {
+                    val.write_char('.').unwrap();
+                }
+                let end = pos + byte as usize + 1;
+                val.write_str(from_utf8(&data[pos+1..end]).unwrap()).unwrap();
+                pos = end;
+                continue;
+            } else {
+                unreachable!();
+            }
+        }
+    }
+
     /// Number of bytes serialized name occupies
     pub fn byte_len(&self) -> usize {
         self.labels.len()
@@ -98,33 +144,7 @@ impl<'a> Name<'a> {
 
 impl<'a> fmt::Display for Name<'a> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let data = self.labels;
-        let original = self.original;
-        let mut pos = 0;
-        loop {
-            let byte = data[pos];
-            if byte == 0 {
-                return Ok(());
-            } else if byte & 0b1100_0000 == 0b1100_0000 {
-                let off = (BigEndian::read_u16(&data[pos..pos+2])
-                           & !0b1100_0000_0000_0000) as usize;
-                if pos != 0 {
-                    fmt.write_char('.')?;
-                }
-                return fmt::Display::fmt(
-                    &Name::scan(&original[off..], original).unwrap(), fmt)
-            } else if byte & 0b1100_0000 == 0 {
-                if pos != 0 {
-                    fmt.write_char('.')?;
-                }
-                let end = pos + byte as usize + 1;
-                fmt.write_str(from_utf8(&data[pos+1..end]).unwrap())?;
-                pos = end;
-                continue;
-            } else {
-                unreachable!();
-            }
-        }
+        return fmt.write_str(&self.str_val);
     }
 }
 impl<'a> fmt::Debug for Name<'a> {
