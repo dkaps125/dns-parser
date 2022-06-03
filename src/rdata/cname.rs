@@ -48,6 +48,7 @@ mod test {
     use QueryClass as QC;
     use Class as C;
     use RData;
+    use Name;
 
     #[test]
     fn parse_response() {
@@ -114,5 +115,15 @@ mod test {
                 ref x => panic!("Wrong rdata {:?}", x),
             }
         }
+    }
+
+    #[test]
+    fn format() {
+        let url = "www.url.com";
+        let data = b"\x03www\x03url\x03com\x00";
+        let cname = RData::CNAME(super::Record(Name::from_string(url)));
+
+        assert_eq!(url.len() as u16 + 2, cname.rdata_length());
+        assert_eq!(data, &cname.to_bytes()[..])
     }
 }

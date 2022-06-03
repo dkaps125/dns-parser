@@ -28,3 +28,19 @@ impl<'a> super::Record<'a> for Record {
         num.to_be_bytes().to_vec()
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    use RData;
+    use super::*;
+
+    #[test]
+    fn format() {
+        let ip = String::from("128.8.255.16");
+        let record = RData::A(super::Record(ip.parse::<Ipv4Addr>().unwrap()));
+
+        assert_eq!(record.rdata_length(), 4);
+        assert_eq!(record.to_bytes(), b"\x80\x08\xFF\x10")
+    }
+}
