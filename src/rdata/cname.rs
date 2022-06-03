@@ -21,11 +21,19 @@ impl<'a> super::Record<'a> for Record<'a> {
     }
 
     fn length(&self) -> u16 {
-        unimplemented!();
+        self.0.str_val.len() as u16 + 2 // one for initial length octet, one for root
     }
 
     fn to_bytes(&self) -> Vec<u8> {
-        unimplemented!();
+        let mut buf = Vec::new();
+        for part in self.0.str_val.split('.') {
+            assert!(part.len() < 63);
+            let ln = part.len() as u8;
+            buf.push(ln);
+            buf.extend(part.as_bytes());
+        }
+        buf.push(0);
+        buf
     }
 }
 

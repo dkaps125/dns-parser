@@ -6,13 +6,6 @@ use byteorder::{BigEndian, ByteOrder};
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Record(pub Ipv4Addr);
 
-impl Record {
-
-    fn to_bytes(&self) -> u32 {
-        self.0.into()
-    }
-}
-
 impl<'a> super::Record<'a> for Record {
 
     const TYPE: isize = 1;

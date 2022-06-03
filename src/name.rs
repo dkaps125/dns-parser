@@ -19,7 +19,6 @@ pub struct Name<'a>{
     labels: &'a [u8],
     /// This is the original buffer size. The compressed names in original
     /// are calculated in this buffer
-    original: &'a [u8],
     pub str_val: String,
 }
 
@@ -88,13 +87,11 @@ impl<'a> Name<'a> {
         if let Some(return_pos) = return_pos {
             return Ok(Name {
                 labels: &data[..return_pos+2], 
-                original: original, 
                 str_val: Name::to_string(data[..return_pos+2].to_vec(), original.to_vec())
             });
         } else {
             return Ok(Name {
                 labels: &data[..pos+1], 
-                original: original,
                 str_val: Name::to_string(data[..pos+1].to_vec(), original.to_vec())
             });
         }
@@ -102,7 +99,7 @@ impl<'a> Name<'a> {
 
     /// Creates a Name from a raw string value
     pub fn from_string(name: &str) -> Name {
-        Name { labels: &[], original: &[], str_val: String::from(name) }
+        Name { labels: &[], str_val: String::from(name) }
     }
 
     fn to_string(labels: Vec<u8>, original: Vec<u8>) -> String {

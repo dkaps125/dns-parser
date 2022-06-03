@@ -1,4 +1,4 @@
-use byteorder::{ByteOrder, BigEndian, WriteBytesExt};
+use byteorder::{BigEndian, WriteBytesExt};
 
 use {Opcode, ResponseCode, Header, QueryType, QueryClass, Name, Class, RData};
 use {ResourceRecord};
@@ -41,20 +41,24 @@ impl<'a> Builder<'a> {
             buf.write_u16::<BigEndian>(question.qclass as u16 | prefer_unicast).unwrap();
         }
 
-        for answer in &self.answers {
-            Builder::write_name(&mut buf, &answer.name.to_string());
-
-            let data = &answer.data;
-            let type_code = data.type_code();
-
-            buf.write_u16::<BigEndian>(type_code as u16).unwrap();
-            buf.write_u16::<BigEndian>(answer.cls as u16).unwrap();
-            buf.write_u32::<BigEndian>(answer.ttl).unwrap();
-            buf.write_u16::<BigEndian>(answer.data.rdata_length()).unwrap();
-            buf.extend(answer.data.to_bytes().iter());
-        }
+        self.answers.iter().for_each(|record| Builder::append_resource_record(&mut buf, record));
+        self.nameservers.iter().for_each(|record| Builder::append_resource_record(&mut buf, record));
+        self.additional.iter().for_each(|record| Builder::append_resource_record(&mut buf, record));
 
         return Ok(buf)
+    }
+
+    fn append_resource_record(buf: &mut Vec<u8>, record: &ResourceRecord) {
+        Builder::write_name(buf, &record.name.to_string());
+
+        let data = &record.data;
+        let type_code = data.type_code();
+
+        buf.write_u16::<BigEndian>(type_code as u16).unwrap();
+        buf.write_u16::<BigEndian>(record.cls as u16).unwrap();
+        buf.write_u32::<BigEndian>(record.ttl).unwrap();
+        buf.write_u16::<BigEndian>(record.data.rdata_length()).unwrap();
+        buf.extend(record.data.to_bytes().iter());
     }
 
     /// Creates a new query
@@ -118,6 +122,38 @@ impl<'a> Builder<'a> {
         };
         self.answers.push(answer);
         self.head.answers += 1;
+
+        self
+    }
+
+    /// Appends a nameserver record to the packet
+    pub fn nameserver(&mut self, qname: &'a str, cls: Class, data: RData<'a>, 
+        multicast_unique: bool, ttl: u32) -> &Builder {
+        let ns = ResourceRecord {
+            name: Name::from_string(qname),
+            cls,
+            data,
+            multicast_unique,
+            ttl
+        };
+        self.nameservers.push(ns);
+        self.head.nameservers += 1;
+
+        self
+    }
+
+    /// Appends additional data to the packet
+    pub fn additional(&mut self, qname: &'a str, cls: Class, data: RData<'a>, 
+        multicast_unique: bool, ttl: u32) -> &Builder {
+        let record = ResourceRecord {
+            name: Name::from_string(qname),
+            cls,
+            data,
+            multicast_unique,
+            ttl
+        };
+        self.additional.push(record);
+        self.head.additional += 1;
 
         self
     }
