@@ -102,6 +102,24 @@ impl<'a> Name<'a> {
         Name { labels: &[], str_val: String::from(name) }
     }
 
+    /// Converts a Name to the on-the-wire byte representation
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut buf = Vec::new();
+        for part in self.str_val.split('.') {
+            assert!(part.len() < 63);
+            let ln = part.len() as u8;
+            buf.push(ln);
+            buf.extend(part.as_bytes());
+        }
+        buf.push(0);
+        buf
+    }
+
+    /// Returns the on-the-wire length in octets
+    pub fn octet_length(&self) -> u16 {
+        self.str_val.len() as u16 + 2 
+    }
+
     fn to_string(labels: Vec<u8>, original: Vec<u8>) -> String {
         let mut val = String::from("");
         let data = labels;

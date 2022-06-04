@@ -21,11 +21,11 @@ impl<'a> super::Record<'a> for Record<'a> {
     }
 
     fn length(&self) -> u16 {
-        unimplemented!();
+        self.0.octet_length() 
     }
 
     fn to_bytes(&self) -> Vec<u8> {
-        unimplemented!();
+        self.0.to_bytes()
     }
 }
 
