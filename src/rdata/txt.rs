@@ -1,8 +1,10 @@
 use Error;
 
+const SEGMENT_LENGTH: usize = 255;
+
 #[derive(Debug, Clone)]
-pub struct Record<'a> {
-    bytes: &'a [u8],
+pub struct Record {
+    bytes: Vec<u8>,
 }
 
 #[derive(Debug)]
@@ -24,21 +26,42 @@ impl<'a> Iterator for RecordIter<'a> {
     }
 }
 
-impl<'a> Record<'a> {
+impl Record {
 
     // Returns iterator over text chunks
-    pub fn iter(&self) -> RecordIter<'a> {
+    pub fn iter(&self) -> RecordIter {
         RecordIter {
-            bytes: self.bytes,
+            bytes: &self.bytes,
         }
+    }
+
+    pub fn from_str(s: &str) -> Record {
+        let mut result: Vec<u8> = Vec::new();
+        let bytes = s.as_bytes();
+        let byte_len = bytes.len();
+
+        let mut pos = 0;
+        while pos < byte_len {
+            if byte_len - pos >= 256 {
+                result.push(SEGMENT_LENGTH as u8);
+                result.extend_from_slice(&bytes[pos..pos+SEGMENT_LENGTH]);
+                pos += SEGMENT_LENGTH;
+            } else {
+                result.push((byte_len - pos) as u8);
+                result.extend_from_slice(&bytes[pos..byte_len]);
+                pos += byte_len - pos;
+            }
+        }
+
+        Record{ bytes: result }
     }
 }
 
-impl<'a> super::Record<'a> for Record<'a> {
+impl<'a> super::Record<'a> for Record {
 
     const TYPE: isize = 16;
 
-    fn parse(rdata: &'a [u8], _original: &'a [u8]) -> super::RDataResult<'a> {
+    fn parse(rdata: &[u8], _original: &[u8]) -> super::RDataResult<'a> {
         // Just a quick check that record is valid
         let len = rdata.len();
         if len < 1 {
@@ -54,16 +77,16 @@ impl<'a> super::Record<'a> for Record<'a> {
             pos += rdlen;
         }
         Ok(super::RData::TXT(Record {
-            bytes: rdata,
+            bytes: rdata.to_vec(),
         }))
     }
 
     fn length(&self) -> u16 {
-        unimplemented!();
+        self.bytes.len() as u16
     }
 
     fn to_bytes(&self) -> Vec<u8> {
-        unimplemented!();
+        self.bytes.clone()
     }
 }
 
@@ -79,6 +102,13 @@ mod test {
     use QueryClass as QC;
     use Class as C;
     use RData;
+    use rdata::Record;
+
+    #[test]
+    fn test_from_str() {
+        let record = super::Record::from_str("this is a test");
+        assert_eq!(record.to_bytes(), b"\x0Ethis is a test")
+    }
 
     #[test]
     fn parse_response_multiple_strings() {

@@ -53,7 +53,7 @@ pub enum RData<'a> {
     PTR(Ptr<'a>),
     SOA(Soa<'a>),
     SRV(Srv<'a>),
-    TXT(Txt<'a>),
+    TXT(Txt),
     /// Anything that can't be parsed yet
     Unknown(Type, &'a [u8]),
 }
